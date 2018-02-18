@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/mannanmcc/rest-api/models"
 	"net/http"
+	"encoding/json"
 	"strconv"
 	"fmt"
 )
@@ -101,4 +102,15 @@ func (env Env) updateCompany(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintln(w, "company update successful")
+}
+
+func (env Env) search(w http.ResponseWriter, r *http.Request) {
+	companyRepo := models.CompanyRepository{Db: env.db}
+	companies, err := companyRepo.SearchAllCompaniesByName(r.FormValue("q"))
+
+	if err != nil {
+		fmt.Fprint(w,"nothing found with the search %s", r.FormValue("q"))
+	}
+
+	json.NewEncoder(w).Encode(companies)
 }
