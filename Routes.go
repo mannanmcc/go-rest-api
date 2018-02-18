@@ -15,12 +15,10 @@ type Route struct {
 
 type Routes []Route
 
-func NewRouter() *mux.Router {
+func NewRouter(env Env) *mux.Router {
 	var routes = Routes{
-		Route{"Index", "GET", "/", Index},
-		Route{"CompanyList", "GET", "/companies", CompanyList},
-		Route{"AddNewCompany", "POST", "/add-company", AddNewCompany},
-		Route{"DeleteCompany", "POST", "/delete-company", DeleteCompany},
+		Route{"AddNewCompany", "POST", "/add-company", env.AddNewCompany},
+		Route{"UpdateCompany", "POST", "/update-company", env.updateCompany},
 	}
 
 	router := mux.NewRouter().StrictSlash(true)
