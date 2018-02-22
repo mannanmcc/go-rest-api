@@ -1,7 +1,6 @@
 package models
 
 import (
-	"bytes"
 	"github.com/jinzhu/gorm"
 	"errors"
 	"fmt"
@@ -20,11 +19,10 @@ type CompanyRepository struct {
 	Db *gorm.DB
 }
 
-// Create - Store the company in the datastore
 func (repo *CompanyRepository) Create(company Company) (int, error) {
 	var existingCompany *Company
-
 	existingCompany, _ = repo.FindByCompanyName(company.Name)
+
 	if existingCompany != nil {
 		return 0, &CompanyDuplicateError{name: company.Name}
 	}
@@ -63,7 +61,6 @@ func (repo *CompanyRepository) Update(company Company) (Company, error) {
 }
 
 
-// FindByRemoteID - Find an existing company by its remote ID
 func (repo *CompanyRepository) FindByRemoteID(remoteID int) (*Company, error) {
 	var company Company
 	res := repo.Db.Find(&company, &Company{RemoteId: remoteID})
@@ -100,13 +97,9 @@ func (repo *CompanyRepository) FindByCompanyName(name string) (*Company, error) 
 
 func (repo *CompanyRepository) SearchAllCompaniesByName(companyName string) ([]Company, error) {
 	var companies []Company
-	var buffer bytes.Buffer
+	query := "name LIKE '%" + companyName + "%'"
 
-	buffer.WriteString("name LIKE '%")
-	buffer.WriteString(companyName)
-	buffer.WriteString("%'")
-
-	repo.Db.Where(buffer.String()).Find(&companies)
+	repo.Db.Where(query).Find(&companies)
 
 	if len(companies) < 1 {
 		return nil, errors.New( fmt.Sprintf("No company name matched with keywords: %s", companyName))

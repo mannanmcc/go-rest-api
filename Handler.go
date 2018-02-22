@@ -5,20 +5,11 @@ import (
 	"net/http"
 	"encoding/json"
 	"strconv"
-	"fmt"
 )
 
-type StatusError struct {
-	Code int
-	Err  error
-}
-
-func (se StatusError) Error() string {
-	return se.Err.Error()
-}
-
-func (se StatusError) Status() int {
-	return se.Code
+type Response struct {
+	Status string `json:"status"`
+	Message string `json:"message"`
 }
 
 func (env Env) AddNewCompany(w http.ResponseWriter, r *http.Request) {
@@ -36,16 +27,27 @@ func (env Env) AddNewCompany(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, err := company.Validate(); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(err.Error()))
+		JsonResponse("FAILED", err.Error(), w)
 		return
 	}
 
 	companyRepo := models.CompanyRepository{Db: env.db}
 
 	if _, err = companyRepo.Create(company); err != nil {
-		fmt.Fprintln(w, StatusError{500, err})
+		JsonResponse("FAILED", err.Error(), w)
+		return
 	}
+
+	JsonResponse("SUCCESS", "New company added", w)
+}
+
+func JsonResponse(status string, msg string, w http.ResponseWriter)  {
+	response := Response{
+		Status: status,
+		Message: msg,
+	}
+
+	json.NewEncoder(w).Encode(response)
 }
 
 func (env Env) updateCompany(w http.ResponseWriter, r *http.Request) {
@@ -67,15 +69,16 @@ func (env Env) updateCompany(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, err := company.Validate(); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(err.Error()))
+		JsonResponse("FAILED", err.Error(), w)
 		return
 	}
 
 	if _, err = companyRepo.Update(company); err != nil {
-		fmt.Fprintln(w, err.Error())
+		JsonResponse("FAILED", err.Error(), w)
 		return
 	}
+
+	JsonResponse("SUCCESS", "Company update successful", w)
 }
 
 func (env Env) search(w http.ResponseWriter, r *http.Request) {
@@ -83,7 +86,7 @@ func (env Env) search(w http.ResponseWriter, r *http.Request) {
 	companies, err := companyRepo.SearchAllCompaniesByName(r.FormValue("q"))
 
 	if err != nil {
-		fmt.Fprint(w, err.Error())
+		JsonResponse("FAILED", err.Error(), w)
 		return
 	}
 

@@ -2,6 +2,8 @@ package models
 
 import (
     "fmt"
+	"strings"
+	"errors"
 )
 
 type Company struct {
@@ -14,7 +16,27 @@ type Company struct {
     ApprovalStatus string `gorm:"column:approvalStatus"`
 }
 
-func (Company *Company) TableName() string {
+func (company *Company) Validate() (bool, error) {
+	if strings.TrimSpace(company.Name) == "" {
+		return false, errors.New("name field missing")
+	}
+
+	if strings.TrimSpace(company.Ticker) == "" {
+		return false, errors.New("ticker field missing")
+	}
+
+	if strings.TrimSpace(company.Status) == "" {
+		return false, errors.New("status field missing")
+	}
+
+	if company.RemoteId == 0 {
+		return false, errors.New("remoteId field missing")
+	}
+
+	return true, nil
+}
+
+func (company *Company) TableName() string {
     return "company"
 }
 
