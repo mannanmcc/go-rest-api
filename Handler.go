@@ -13,78 +13,48 @@ type StatusError struct {
 	Err  error
 }
 
-// Allows StatusError to satisfy the error interface.
 func (se StatusError) Error() string {
 	return se.Err.Error()
 }
 
-// Returns our HTTP status code.
 func (se StatusError) Status() int {
 	return se.Code
 }
 
 func (env Env) AddNewCompany(w http.ResponseWriter, r *http.Request) {
-	var company models.Company
-	var linkedInId int
-	if r.FormValue("remoteId") == "" {
-		fmt.Fprintln(w, "remoteId is missing!")
-		return
-	}
+	var err error
 
-	remoteId, err:= strconv.Atoi(r.FormValue("remoteId"))
-	if err != nil {
-		fmt.Fprintln(w, "invalid remote id provided!")
-		return
-	}
+	remoteId, _ := strconv.Atoi(r.FormValue("remoteId"))
+	linkedInId, _ := strconv.Atoi(r.FormValue("linkedInId"))
 
-	linkedInId, err= strconv.Atoi(r.FormValue("linkedInId"))
-	if err != nil {
-		fmt.Fprintln(w, "invalid linkedInId provided!")
-		return
-	}
-
-	company = models.Company{
+	company := models.Company{
 		Name: r.FormValue("name"),
 		RemoteId: remoteId,
-		Ticker: r.FormValue("ticker"),
 		LinkedInId: linkedInId,
-		Status: "NEW",
-		ApprovalStatus:string("PENDING"),
+		Status: r.FormValue("status"),
+		Ticker: r.FormValue("ticker"),
+	}
+
+	if _, err := company.Validate(); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(err.Error()))
+		return
 	}
 
 	companyRepo := models.CompanyRepository{Db: env.db}
-	_, err = companyRepo.Create(company)
 
-	if err != nil {
+	if _, err = companyRepo.Create(company); err != nil {
 		fmt.Fprintln(w, StatusError{500, err})
 	}
 }
 
 func (env Env) updateCompany(w http.ResponseWriter, r *http.Request) {
-	var linkedInId, remoteId, companyId int
 	var err error
 
 	companyRepo := models.CompanyRepository{Db: env.db}
-
-	if r.FormValue("id") == "" {
-		fmt.Fprintln(w, "id is missing!")
-		return
-	}
-
-
-	if companyId, err = strconv.Atoi(r.FormValue("id")); err != nil {
-		fmt.Fprintln(w, "id is missing")
-		return
-	}
-
-	if remoteId, err = strconv.Atoi(r.FormValue("remoteId")); err != nil {
-		fmt.Fprintln(w, "remoteId is missing")
-		return
-	}
-
-	if linkedInId, err = strconv.Atoi(r.FormValue("linkedInId")); err != nil {
-		fmt.Fprintln(w, "linkedInId is missing")
-	}
+	remoteId, _ := strconv.Atoi(r.FormValue("remoteId"))
+	linkedInId, _ := strconv.Atoi(r.FormValue("linkedInId"))
+	companyId, _ := strconv.Atoi(r.FormValue("id"))
 
 	company := models.Company{
 		ID: companyId,
@@ -92,16 +62,20 @@ func (env Env) updateCompany(w http.ResponseWriter, r *http.Request) {
 		Name: r.FormValue("name"),
 		Ticker: r.FormValue("ticker"),
 		LinkedInId: linkedInId,
-		Status: r.FormValue("Status"),
+		Status: r.FormValue("status"),
 		ApprovalStatus: r.FormValue("approvalStatus"),
+	}
+
+	if _, err := company.Validate(); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(err.Error()))
+		return
 	}
 
 	if _, err = companyRepo.Update(company); err != nil {
 		fmt.Fprintln(w, err.Error())
 		return
 	}
-
-	fmt.Fprintln(w, "company update successful")
 }
 
 func (env Env) search(w http.ResponseWriter, r *http.Request) {
@@ -109,7 +83,8 @@ func (env Env) search(w http.ResponseWriter, r *http.Request) {
 	companies, err := companyRepo.SearchAllCompaniesByName(r.FormValue("q"))
 
 	if err != nil {
-		fmt.Fprint(w,"nothing found with the search %s", r.FormValue("q"))
+		fmt.Fprint(w, err.Error())
+		return
 	}
 
 	json.NewEncoder(w).Encode(companies)
