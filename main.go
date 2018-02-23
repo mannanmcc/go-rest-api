@@ -4,12 +4,8 @@ import (
 	"log"
 	"net/http"
 	"github.com/mannanmcc/rest-api/models"
-	"github.com/jinzhu/gorm"
+	"github.com/mannanmcc/rest-api/handlers"
 )
-
-type Env struct {
-	db *gorm.DB
-}
 
 func main() {
 	db, err := models.NewDB("test:test@tcp(127.0.0.1:3306)/test")
@@ -20,7 +16,7 @@ func main() {
 
 	defer db.Close()
 
-	env := Env{db: db}
+	env := handlers.Env{Db: db}
 	router := NewRouter(env)
 
 	log.Fatal(http.ListenAndServe(":8080", router))

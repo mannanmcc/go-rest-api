@@ -1,4 +1,4 @@
-package main
+package handlers
 
 import (
 	"github.com/mannanmcc/rest-api/models"
@@ -32,7 +32,7 @@ func (env Env) AddNewCompany(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	companyRepo := models.CompanyRepository{Db: env.db}
+	companyRepo := models.CompanyRepository{Db: env.Db}
 
 	if _, err = companyRepo.Create(company); err != nil {
 		JsonResponse("FAILED", err.Error(), w)
@@ -51,10 +51,10 @@ func JsonResponse(status string, msg string, w http.ResponseWriter)  {
 	json.NewEncoder(w).Encode(response)
 }
 
-func (env Env) updateCompany(w http.ResponseWriter, r *http.Request) {
+func (env Env) UpdateCompany(w http.ResponseWriter, r *http.Request) {
 	var err error
 
-	companyRepo := models.CompanyRepository{Db: env.db}
+	companyRepo := models.CompanyRepository{Db: env.Db}
 	remoteId, _ := strconv.Atoi(r.FormValue("remoteId"))
 	linkedInId, _ := strconv.Atoi(r.FormValue("linkedInId"))
 	companyId, _ := strconv.Atoi(r.FormValue("id"))
@@ -82,8 +82,8 @@ func (env Env) updateCompany(w http.ResponseWriter, r *http.Request) {
 	JsonResponse("SUCCESS", "Company update successful", w)
 }
 
-func (env Env) search(w http.ResponseWriter, r *http.Request) {
-	companyRepo := models.CompanyRepository{Db: env.db}
+func (env Env) Search(w http.ResponseWriter, r *http.Request) {
+	companyRepo := models.CompanyRepository{Db: env.Db}
 	companies, err := companyRepo.SearchAllCompaniesByName(r.FormValue("q"))
 
 	if err != nil {
@@ -94,7 +94,7 @@ func (env Env) search(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(companies)
 }
 
-func (env Env) getCompany(w http.ResponseWriter, r *http.Request) {
+func (env Env) GetCompany(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	companyId, err := strconv.Atoi(params["id"])
 
@@ -103,7 +103,7 @@ func (env Env) getCompany(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	companyRepo := models.CompanyRepository{Db: env.db}
+	companyRepo := models.CompanyRepository{Db: env.Db}
 	companyFound, err := companyRepo.FindByID(companyId)
 
 	if err != nil {

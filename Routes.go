@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/mannanmcc/rest-api/handlers"
 )
 
 type Route struct {
@@ -15,12 +16,12 @@ type Route struct {
 
 type Routes []Route
 
-func NewRouter(env Env) *mux.Router {
+func NewRouter(env handlers.Env) *mux.Router {
 	var routes = Routes{
 		Route{"AddNewCompany", "POST", "/add-company", env.AddNewCompany},
-		Route{"UpdateCompany", "POST", "/update-company", env.updateCompany},
-		Route{"SearchCompany", "GET", "/search", env.search},
-		Route{"GetCompany", "GET", "/company/{id:[0-9]+}", env.getCompany},
+		Route{"UpdateCompany", "POST", "/update-company", env.UpdateCompany},
+		Route{"SearchCompany", "GET", "/search", env.Search},
+		Route{"GetCompany", "GET", "/company/{id:[0-9]+}", env.GetCompany},
 	}
 
 	router := mux.NewRouter().StrictSlash(true)
