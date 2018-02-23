@@ -19,7 +19,8 @@ func NewRouter(env Env) *mux.Router {
 	var routes = Routes{
 		Route{"AddNewCompany", "POST", "/add-company", env.AddNewCompany},
 		Route{"UpdateCompany", "POST", "/update-company", env.updateCompany},
-		Route{"searchCompany", "GET", "/search", env.search},
+		Route{"SearchCompany", "GET", "/search", env.search},
+		Route{"GetCompany", "GET", "/company/{id:[0-9]+}", env.getCompany},
 	}
 
 	router := mux.NewRouter().StrictSlash(true)

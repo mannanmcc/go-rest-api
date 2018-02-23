@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"encoding/json"
 	"strconv"
+	"github.com/gorilla/mux"
 )
 
 type Response struct {
@@ -91,4 +92,25 @@ func (env Env) search(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(companies)
+}
+
+func (env Env) getCompany(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	companyId, err := strconv.Atoi(params["id"])
+
+	if err != nil {
+		JsonResponse("FAILED", "company id not provided", w)
+		return
+	}
+
+	companyRepo := models.CompanyRepository{Db: env.db}
+	companyFound, err := companyRepo.FindByID(companyId)
+
+	if err != nil {
+		JsonResponse("FAILED", "No company found with id provided", w)
+		return
+
+	}
+
+	json.NewEncoder(w).Encode(&companyFound)
 }
