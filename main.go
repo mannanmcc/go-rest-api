@@ -1,10 +1,10 @@
 package main
 
 import (
-	"log"
 	"net/http"
 	"github.com/mannanmcc/rest-api/models"
 	"github.com/mannanmcc/rest-api/handlers"
+	"log"
 )
 
 func main() {

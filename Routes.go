@@ -7,20 +7,25 @@ import (
 	"net/http"
 )
 
-func NewRouter(env handlers.Env) *mux.Router {
+func NewRouter(env handlers.Env) *negroni.Negroni {
 	r := mux.NewRouter()
 
 	r.HandleFunc("/get-token", env.GetToken).Methods("POST")
-	//r.HandleFunc("/company/add", env.AddNewCompany).Methods("POST")
 	r.HandleFunc("/company/update", env.UpdateCompany).Methods("POST")
+	r.HandleFunc("/company/add", env.AddNewCompany).Methods("POST")
 	r.HandleFunc("/company/search", env.Search).Methods("GET")
 	r.HandleFunc("/company/{id:[0-9]+}", env.GetCompany).Methods("GET")
 
-	//wrap a route with negroni to make it secure
-	r.Handle("/company/add", negroni.New(
+	//wrap with a second muxer to apply middleware
+	routerMux := http.NewServeMux()
+	routerMux.Handle("/get-token", r)
+	routerMux.Handle("/company/", negroni.New(
 		negroni.HandlerFunc(env.ValidateTokenMiddleware),
-		negroni.Wrap(http.HandlerFunc(env.AddNewCompany)),
+		negroni.Wrap(r),
 	))
 
-	return r
+	n := negroni.Classic()
+	n.UseHandler(routerMux)
+
+	return n
 }
