@@ -1,34 +1,17 @@
 package main
 
 import (
-	"net/http"
-
 	"github.com/gorilla/mux"
 	"github.com/mannanmcc/rest-api/handlers"
 )
 
-type Route struct {
-	Name        string
-	Method      string
-	Pattern     string
-	HandlerFunc http.HandlerFunc
-}
-
-type Routes []Route
-
 func NewRouter(env handlers.Env) *mux.Router {
-	var routes = Routes{
-		Route{"AddNewCompany", "POST", "/add-company", env.AddNewCompany},
-		Route{"UpdateCompany", "POST", "/update-company", env.UpdateCompany},
-		Route{"SearchCompany", "GET", "/search", env.Search},
-		Route{"GetCompany", "GET", "/company/{id:[0-9]+}", env.GetCompany},
-	}
+	r := mux.NewRouter()
 
-	router := mux.NewRouter().StrictSlash(true)
+	r.HandleFunc("/add-company", env.AddNewCompany).Methods("POST")
+	r.HandleFunc("/update-company", env.UpdateCompany).Methods("POST")
+	r.HandleFunc("/search", env.Search).Methods("GET")
+	r.HandleFunc("/company/{id:[0-9]+}", env.GetCompany).Methods("GET")
 
-	for _, route := range routes {
-		router.Methods(route.Method).Path(route.Pattern).Name(route.Name).Handler(route.HandlerFunc)
-	}
-
-	return router
+	return r
 }
