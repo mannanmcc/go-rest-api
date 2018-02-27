@@ -1,33 +1,31 @@
 package main
 
 import (
-	"net/http"
-
 	"github.com/gorilla/mux"
+	"github.com/mannanmcc/rest-api/handlers"
+	"github.com/codegangsta/negroni"
+	"net/http"
 )
 
-type Route struct {
-	Name        string
-	Method      string
-	Pattern     string
-	HandlerFunc http.HandlerFunc
-}
+func NewRouter(env handlers.Env) *negroni.Negroni {
+	r := mux.NewRouter()
 
-type Routes []Route
+	r.HandleFunc("/get-token", env.GetToken).Methods("POST")
+	r.HandleFunc("/company/update", env.UpdateCompany).Methods("POST")
+	r.HandleFunc("/company/add", env.AddNewCompany).Methods("POST")
+	r.HandleFunc("/company/search", env.Search).Methods("GET")
+	r.HandleFunc("/company/{id:[0-9]+}", env.GetCompany).Methods("GET")
 
-func NewRouter() *mux.Router {
-	var routes = Routes{
-		Route{"Index", "GET", "/", Index},
-		Route{"CompanyList", "GET", "/companies", CompanyList},
-		Route{"AddNewCompany", "POST", "/add-company", AddNewCompany},
-		Route{"DeleteCompany", "POST", "/delete-company", DeleteCompany},
-	}
+	//wrap with a second muxer to apply middleware
+	routerMux := http.NewServeMux()
+	routerMux.Handle("/get-token", r)
+	routerMux.Handle("/company/", negroni.New(
+		negroni.HandlerFunc(env.ValidateTokenMiddleware),
+		negroni.Wrap(r),
+	))
 
-	router := mux.NewRouter().StrictSlash(true)
+	n := negroni.Classic()
+	n.UseHandler(routerMux)
 
-	for _, route := range routes {
-		router.Methods(route.Method).Path(route.Pattern).Name(route.Name).Handler(route.HandlerFunc)
-	}
-
-	return router
+	return n
 }
