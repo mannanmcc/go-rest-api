@@ -1,21 +1,24 @@
 package handlers
 
 import (
-	"strings"
-	"github.com/dgrijalva/jwt-go"
-	"net/http"
-	"github.com/mannanmcc/rest-api/models"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"strings"
+
+	"github.com/dgrijalva/jwt-go"
 	"github.com/dgrijalva/jwt-go/request"
+	"github.com/mannanmcc/rest-api/models"
 )
 
+//JwtToken toke struct
 type JwtToken struct {
 	Token string `json:"token"`
 }
 
 var signKey = []byte("secret")
 
+//GetToken generate a token to api authentication
 func (env Env) GetToken(w http.ResponseWriter, r *http.Request) {
 
 	var user models.User
@@ -26,16 +29,16 @@ func (env Env) GetToken(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusForbidden)
-		fmt.Fprint(w, "Error in request")
+		fmt.Fprintf(w, "Error in request:%v", err)
 		return
 	}
 
 	//todo - validate user details with database
 	if strings.ToLower(user.Username) != "someone" || user.Password != "password" {
-			w.WriteHeader(http.StatusForbidden)
-			fmt.Println("Error logging in")
-			fmt.Fprint(w, "Invalid credentials")
-			return
+		w.WriteHeader(http.StatusForbidden)
+		fmt.Println("Error logging in")
+		fmt.Fprint(w, "Invalid credentials")
+		return
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
@@ -50,6 +53,9 @@ func (env Env) GetToken(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(JwtToken{Token: tokenString})
 }
 
+/*
+ValidateTokenMiddleware validates the token passed to authenticate the user
+*/
 func (env Env) ValidateTokenMiddleware(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 
 	token, err := request.ParseFromRequest(r, request.AuthorizationHeaderExtractor,

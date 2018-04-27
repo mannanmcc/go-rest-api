@@ -1,12 +1,14 @@
 package main
 
 import (
+	"net/http"
+
+	"github.com/codegangsta/negroni"
 	"github.com/gorilla/mux"
 	"github.com/mannanmcc/rest-api/handlers"
-	"github.com/codegangsta/negroni"
-	"net/http"
 )
 
+//NewRouter points a request to a handler function
 func NewRouter(env handlers.Env) *negroni.Negroni {
 	r := mux.NewRouter()
 
