@@ -10,7 +10,7 @@ import (
 
 func main() {
 	db, err := models.NewDB("test:test@tcp(127.0.0.1:3306)/test")
-
+	log.Print("starting...")
 	if err != nil {
 		panic(err)
 	}
@@ -21,5 +21,5 @@ func main() {
 	router := NewRouter(env)
 
 	//log.Fatal(http.ListenAndServeTLS(":8080", "server.crt", "server.key", router))
-	log.Fatal(http.ListenAndServe(":8080", router))
+	log.Fatal(http.ListenAndServe(":8000", router))
 }

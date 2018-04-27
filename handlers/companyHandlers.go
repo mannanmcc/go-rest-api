@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -18,7 +19,6 @@ type Response struct {
 // AddNewCompany - handle add new company request
 func (env Env) AddNewCompany(w http.ResponseWriter, r *http.Request) {
 	var err error
-
 	remoteID, _ := strconv.Atoi(r.FormValue("remoteId"))
 	linkedInID, _ := strconv.Atoi(r.FormValue("linkedInId"))
 
@@ -35,16 +35,19 @@ func (env Env) AddNewCompany(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	indexCompany(company)
+
 	companyRepo := models.CompanyRepository{Db: env.Db}
 
-	if _, err = companyRepo.Create(company); err != nil {
+	var companyID int
+	if companyID, err = companyRepo.Create(company); err != nil {
 		JSONResponse("FAILED", err.Error(), w)
 		return
 	}
 
 	//indexCompany()
-
-	JSONResponse("SUCCESS", "New company added", w)
+	message := fmt.Sprintf("new company added %d", companyID)
+	JSONResponse("SUCCESS", message, w)
 }
 
 //JSONResponse builds up the response object and encode
