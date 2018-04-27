@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -35,8 +34,6 @@ func (env Env) AddNewCompany(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	indexCompany(company)
-
 	companyRepo := models.CompanyRepository{Db: env.Db}
 
 	var companyID int
@@ -45,9 +42,10 @@ func (env Env) AddNewCompany(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//indexCompany()
-	message := fmt.Sprintf("new company added %d", companyID)
-	JSONResponse("SUCCESS", message, w)
+	company.ID = companyID
+	indexCompany(company)
+
+	JSONResponse("SUCCESS", "company added successfully", w)
 }
 
 //JSONResponse builds up the response object and encode

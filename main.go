@@ -10,7 +10,6 @@ import (
 
 func main() {
 	db, err := models.NewDB("test:test@tcp(127.0.0.1:3306)/test")
-	log.Print("starting...")
 	if err != nil {
 		panic(err)
 	}

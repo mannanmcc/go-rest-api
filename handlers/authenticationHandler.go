@@ -18,7 +18,7 @@ type JwtToken struct {
 
 var signKey = []byte("secret")
 
-//GetToken generate a token to api authentication
+//GetToken generate a token for authentication
 func (env Env) GetToken(w http.ResponseWriter, r *http.Request) {
 
 	var user models.User
@@ -50,6 +50,7 @@ func (env Env) GetToken(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Println(tokenString)
 	}
+
 	json.NewEncoder(w).Encode(JwtToken{Token: tokenString})
 }
 

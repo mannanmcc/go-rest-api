@@ -2,9 +2,6 @@ package handlers
 
 import (
 	"errors"
-	"fmt"
-	"log"
-	"reflect"
 
 	"github.com/mannanmcc/rest-api/models"
 	"golang.org/x/net/context"
@@ -14,22 +11,18 @@ import (
 const (
 	indexName    = "thirdbridge"
 	docType      = "company"
-	appName      = "myApp"
+	appName      = "companyManager"
 	indexMapping = `{
 						"mappings" : {
 							"company" : {
 								"properties" : {
-									"name" : { "type" : "text" }
+									"name" : { "type" : "text" },
+									"status" : { "type" : "text" }
 								}
 							}
 						}
 					}`
 )
-
-// // Company entity to index
-// type Company struct {
-// 	Name string `json:"name"`
-// }
 
 func indexCompany(company models.Company) {
 	client, err := elastic.NewClient(elastic.SetURL("http://localhost:9200"))
@@ -37,24 +30,15 @@ func indexCompany(company models.Company) {
 		panic(err)
 	}
 
-	err = createIndexCompanyIfDoesNotExist(client)
+	err = createCompanyIndexIfDoesNotExist(client)
 	if err != nil {
 		panic(err)
 	}
-
-	// company := Company{
-	// 	Name: fmt.Sprintf("new Company: test company"),
-	// }
 
 	addCompanyToIndex(client, company)
-
-	err = findAndPrintAppLogs(client)
-	if err != nil {
-		panic(err)
-	}
 }
 
-func createIndexCompanyIfDoesNotExist(client *elastic.Client) error {
+func createCompanyIndexIfDoesNotExist(client *elastic.Client) error {
 	exists, err := client.IndexExists(indexName).Do(context.TODO())
 	if err != nil {
 		return err
@@ -63,7 +47,7 @@ func createIndexCompanyIfDoesNotExist(client *elastic.Client) error {
 	if exists {
 		return nil
 	}
-	log.Printf("creating new index: %s", indexName)
+
 	res, err := client.CreateIndex(indexName).
 		Body(indexMapping).
 		Do(context.TODO())
@@ -80,7 +64,6 @@ func createIndexCompanyIfDoesNotExist(client *elastic.Client) error {
 }
 
 func addCompanyToIndex(client *elastic.Client, company models.Company) error {
-	log.Printf("adding company details into index.......")
 	_, err := client.Index().
 		Index(indexName).
 		Type(docType).
@@ -89,27 +72,6 @@ func addCompanyToIndex(client *elastic.Client, company models.Company) error {
 
 	if err != nil {
 		return err
-	}
-
-	return nil
-}
-
-func findAndPrintAppLogs(client *elastic.Client) error {
-	termQuery := elastic.NewTermQuery("app", appName)
-
-	res, err := client.Search(indexName).
-		Index(indexName).
-		Query(termQuery).
-		Do(context.TODO())
-
-	if err != nil {
-		return err
-	}
-
-	var l models.Company
-	for _, item := range res.Each(reflect.TypeOf(l)) {
-		l := item.(models.Company)
-		fmt.Printf("name: %s\n", l.Name)
 	}
 
 	return nil
