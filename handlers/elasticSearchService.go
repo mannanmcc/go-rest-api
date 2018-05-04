@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"encoding/json"
 	"errors"
+	"log"
 
 	"github.com/mannanmcc/rest-api/models"
 	"golang.org/x/net/context"
@@ -25,7 +27,7 @@ const (
 )
 
 func indexCompany(company models.Company) {
-	client, err := elastic.NewClient(elastic.SetURL("http://localhost:9200"))
+	client, err := newElasticSearchClient()
 	if err != nil {
 		panic(err)
 	}
@@ -36,6 +38,34 @@ func indexCompany(company models.Company) {
 	}
 
 	addCompanyToIndex(client, company)
+}
+
+func searchCompanyByName(searchTerm string) ([]models.Company, error) {
+	var companies []models.Company
+	index := "thirdbridge"
+
+	client, err := newElasticSearchClient()
+	if err != nil {
+		panic(err)
+	}
+	q := elastic.NewMultiMatchQuery(searchTerm, "Name", "abbreviation").Type("phrase_prefix")
+	searchResult, err := client.Search().Index(index).Type("company").Query(q).Do(context.TODO())
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, hit := range searchResult.Hits.Hits {
+		var company models.Company
+		err := json.Unmarshal(*hit.Source, &company)
+		log.Printf("result in elasticsearch with :%s found:: %+v\n", searchTerm, company)
+		if err != nil {
+			return nil, err
+		}
+		companies = append(companies, company)
+	}
+
+	return companies, nil
 }
 
 func createCompanyIndexIfDoesNotExist(client *elastic.Client) error {

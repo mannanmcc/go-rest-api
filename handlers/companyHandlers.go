@@ -92,12 +92,18 @@ func (env Env) UpdateCompany(w http.ResponseWriter, r *http.Request) {
 
 //Search handles company search request
 func (env Env) Search(w http.ResponseWriter, r *http.Request) {
-	companyRepo := models.CompanyRepository{Db: env.Db}
-	companies, err := companyRepo.SearchAllCompaniesByName(r.FormValue("q"))
+	searchKeywords := r.FormValue("q")
 
+	companies, err := searchCompanyByName(searchKeywords)
+	//if company not found in the elasticsearch index, then lookup in the database
 	if err != nil {
-		JSONResponse("FAILED", err.Error(), w)
-		return
+		companyRepo := models.CompanyRepository{Db: env.Db}
+		companies, err = companyRepo.SearchAllCompaniesByName(searchKeywords)
+
+		if err != nil {
+			JSONResponse("FAILED", err.Error(), w)
+			return
+		}
 	}
 
 	json.NewEncoder(w).Encode(companies)
