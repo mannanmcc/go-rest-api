@@ -1,9 +1,11 @@
 package models
 
 import (
-	"github.com/jinzhu/gorm"
 	"errors"
 	"fmt"
+	"log"
+
+	"github.com/jinzhu/gorm"
 )
 
 type CompanyRepositoryInterface interface {
@@ -24,14 +26,16 @@ func (repo *CompanyRepository) Create(company Company) (int, error) {
 	existingCompany, _ = repo.FindByCompanyName(company.Name)
 
 	if existingCompany != nil {
+		log.Printf("exitsdsds 1")
 		return 0, &CompanyDuplicateError{name: company.Name}
 	}
 
 	existingCompany, _ = repo.FindByRemoteID(company.RemoteId)
 	if existingCompany != nil {
+		log.Printf("exitsdsds 3")
 		return 0, &DuplicateCompanyRemoteIdError{remoteId: company.RemoteId}
 	}
-
+	log.Printf("saving company")
 	repo.Db.Save(&company)
 
 	return company.ID, nil
@@ -41,7 +45,7 @@ func (repo *CompanyRepository) Update(company Company) (Company, error) {
 	var existingCompany *Company
 	var err error
 
-	if existingCompany, err = repo.FindByID(company.ID); err !=nil {
+	if existingCompany, err = repo.FindByID(company.ID); err != nil {
 		return company, errors.New(fmt.Sprintf("Company not found with %d", company.ID))
 	}
 
@@ -60,13 +64,12 @@ func (repo *CompanyRepository) Update(company Company) (Company, error) {
 	return company, nil
 }
 
-
 func (repo *CompanyRepository) FindByRemoteID(remoteID int) (*Company, error) {
 	var company Company
 	res := repo.Db.Find(&company, &Company{RemoteId: remoteID})
 
 	if res.RecordNotFound() {
-		return nil, errors.New( fmt.Sprintf("company not found with remote id: %d", remoteID))
+		return nil, errors.New(fmt.Sprintf("company not found with remote id: %d", remoteID))
 	}
 
 	return &company, nil
@@ -77,7 +80,7 @@ func (repo *CompanyRepository) FindByID(id int) (*Company, error) {
 	res := repo.Db.Find(&company, &Company{ID: id})
 
 	if res.RecordNotFound() {
-		return nil, errors.New( fmt.Sprintf("company not found with remote id: %d", id))
+		return nil, errors.New(fmt.Sprintf("company not found with remote id: %d", id))
 	}
 
 	return &company, nil
@@ -88,12 +91,11 @@ func (repo *CompanyRepository) FindByCompanyName(name string) (*Company, error) 
 	res := repo.Db.Find(&company, &Company{Name: name})
 
 	if res.RecordNotFound() {
-		return nil, errors.New( fmt.Sprintf("company not found with name: %s", name))
+		return nil, errors.New(fmt.Sprintf("company not found with name: %s", name))
 	}
 
 	return &company, nil
 }
-
 
 func (repo *CompanyRepository) SearchAllCompaniesByName(companyName string) ([]Company, error) {
 	var companies []Company
@@ -102,7 +104,7 @@ func (repo *CompanyRepository) SearchAllCompaniesByName(companyName string) ([]C
 	repo.Db.Where(query).Find(&companies)
 
 	if len(companies) < 1 {
-		return nil, errors.New( fmt.Sprintf("No company name matched with keywords: %s", companyName))
+		return nil, errors.New(fmt.Sprintf("No company name matched with keywords: %s", companyName))
 	}
 
 	return companies, nil
