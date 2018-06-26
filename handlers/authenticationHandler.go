@@ -2,9 +2,8 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
+	"log"
 	"net/http"
-	"strings"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/dgrijalva/jwt-go/request"
@@ -18,7 +17,7 @@ type JwtToken struct {
 
 var signKey = []byte("secret")
 
-//GetToken generate a token for authentication
+//GetToken - generate a token for authentication
 func (env Env) GetToken(w http.ResponseWriter, r *http.Request) {
 
 	var user models.User
@@ -28,16 +27,17 @@ func (env Env) GetToken(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&user)
 
 	if err != nil {
-		w.WriteHeader(http.StatusForbidden)
-		fmt.Fprintf(w, "Error in request:%v", err)
+		log.Println(err.Error())
+		http.Error(w, "Oops, Error in the request", http.StatusForbidden)
 		return
 	}
 
 	//todo - validate user details with database
-	if strings.ToLower(user.Username) != "someone" || user.Password != "password" {
-		w.WriteHeader(http.StatusForbidden)
-		fmt.Println("Error logging in")
-		fmt.Fprint(w, "Invalid credentials")
+	userRepo := models.UserRepository{Db: env.Db}
+	_, err = userRepo.FindByUserNameAndPassword(user.Username, user.Password)
+	if err != nil {
+		log.Println("Oops, wrong credential passed!")
+		http.Error(w, "Oops, wrong credential passed!", http.StatusForbidden)
 		return
 	}
 
@@ -48,7 +48,9 @@ func (env Env) GetToken(w http.ResponseWriter, r *http.Request) {
 
 	tokenString, err = token.SignedString(signKey)
 	if err != nil {
-		fmt.Println(tokenString)
+		log.Println("Oops, there is a error to create your token")
+		http.Error(w, "there was an error in login", http.StatusInternalServerError)
+		return
 	}
 
 	json.NewEncoder(w).Encode(JwtToken{Token: tokenString})
@@ -68,11 +70,11 @@ func (env Env) ValidateTokenMiddleware(w http.ResponseWriter, r *http.Request, n
 		if token.Valid {
 			next(w, r)
 		} else {
-			w.WriteHeader(http.StatusUnauthorized)
-			fmt.Fprint(w, "Token is not valid")
+			log.Println("Token is not valid")
+			http.Error(w, "Oops, wrong credential passed!", http.StatusUnauthorized)
 		}
 	} else {
-		w.WriteHeader(http.StatusUnauthorized)
-		fmt.Fprint(w, "Unauthorized access to this resource")
+		log.Println(w, "Unauthorized access to this resource")
+		http.Error(w, "Oops, wrong credential passed!", http.StatusUnauthorized)
 	}
 }
